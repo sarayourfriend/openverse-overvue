@@ -1,0 +1,53 @@
+---
+import VListAggregator from '../components/VListAggregator.vue'
+import VMarkAllAsRead from '../components/VMarkAllAsRead.vue'
+import VGitHubAuth from '../components/VGitHubAuth.vue'
+---
+
+<html lang="en">
+	<head>
+		<title>Openverse Overview</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/styles.css">
+		<style>
+			.app {
+				padding-top: 2rem;
+			}
+
+			.title {
+				font-weight: bold;
+				font-size: 2rem;
+				width: 100%;
+				text-align: center;
+				padding-bottom: 2rem;
+			}
+
+			.copy {
+				width: 75vw;
+				min-width: 300px;
+				margin: auto;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			.auth {
+				margin-bottom: 1rem;
+			}
+		</style>
+	</head>
+	<body>
+		<main class="app">
+			<h1 class="title">Openverse Project Overview</h1>
+			<div class="copy">
+				<div class="auth">
+					<VGitHubAuth client:only />
+				</div>
+				<VMarkAllAsRead client:only />
+			</div>
+			<VListAggregator client:only />
+		</main>
+	</body>
+</html>

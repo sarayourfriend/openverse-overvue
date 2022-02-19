@@ -1,0 +1,40 @@
+@import url("https://cdn.skypack.dev/minireset.css");
+
+:root {
+	--white: white;
+	--charcoal: #30272e;
+	--charcoal-active: #6e686d;
+	--background: var(--brand);
+	--background-contrast: var(--white);
+	--text: var(--charcoal);
+	--brand: #ffe033;
+	--accent: #c52b9b;
+	--accent-active: #7c2264;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--background: var(--charcoal);
+		--background-contrast: var(--charcoal-active);
+		--text: var(--white);
+		--accent: #ffa3e7;
+		--accent-active: var(--white);
+	}
+
+	a {
+		color: var(--white);
+		font-weight: bold;
+	}
+
+	a:visited {
+		color: var(--brand);
+	}
+}
+
+:root {
+	color: var(--text);
+	font-family: Avenir, Helvetica, Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	background-color: var(--background);
+}

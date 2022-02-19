@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "node",
+		"importsNotUsedAsValues": "error",
+		"strict": true
+	}
+}
