@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Activity, Issue } from "../composables/pulls"
+import type { Activity } from "../composables/pulls"
 import { relativeTime } from "../utils/relative-time"
 import { getLastActivity } from "../utils/last-activity"
 
@@ -8,7 +8,7 @@ const lastActivity = getLastActivity(props.activity)
 </script>
 
 <template>
-	<p>
+	<p v-if="lastActivity.user">
 		Last activity by
 		<a :href="lastActivity.user.html_url">{{ lastActivity.user.login }}</a>
 		{{ " " }}

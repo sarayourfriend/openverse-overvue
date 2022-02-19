@@ -20,5 +20,5 @@ pnpm install
 Then run the development server:
 
 ```bash
-pnpm start
+pnpm dev
 ```

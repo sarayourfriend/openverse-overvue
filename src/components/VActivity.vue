@@ -28,7 +28,7 @@ watch([read], () => {
 			<a :class="$style.title" :href="activity.html_url">{{
 				activity.title
 			}}</a>
-			<p :class="$style.small">
+			<p :class="$style.small" v-if="activity.user">
 				Opened by
 				<a :href="activity.user.html_url">{{ activity.user.login }}</a>
 				{{ relativeTime(activity.created_at) }} ago

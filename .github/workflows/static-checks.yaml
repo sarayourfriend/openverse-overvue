@@ -1,0 +1,50 @@
+name: Static checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  types:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.30.1
+          # Set this to false because we want to be able to skip installation if there is a cache hit in the next step
+          run_install: false
+
+      # setup node.js environment and npm
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: "pnpm"
+
+      - name: Check types
+        run: pnpm install && pnpm types
+
+  formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.30.1
+          # Set this to false because we want to be able to skip installation if there is a cache hit in the next step
+          run_install: false
+
+      # setup node.js environment and npm
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: "pnpm"
+
+      - name: Check formatting
+        run: pnpm install && pnpm lint
