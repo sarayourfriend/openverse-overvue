@@ -96,15 +96,15 @@ export function useStorage<T>(
 				data.value = serializer.read(rawValue)
 			}
 		} catch (e) {
-			onError(e)
+			onError(e as Error)
 		}
 	}
 
 	read()
 
 	if (window && listenToStorageChanges)
-		useEventListener(window, "storage", (e: StorageEvent) =>
-			setTimeout(() => read(e), 0),
+		useEventListener(window, "storage", (e: Event) =>
+			setTimeout(() => read(e as StorageEvent), 0),
 		)
 
 	if (storage) {
@@ -113,7 +113,7 @@ export function useStorage<T>(
 				if (data.value == null) storage.removeItem(key)
 				else storage.setItem(key, serializer.write(data.value))
 			} catch (e) {
-				onError(e)
+				onError(e as Error)
 			}
 		})
 	}
