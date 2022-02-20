@@ -1,8 +1,13 @@
-import type { Activity, Issue, Comment } from "../composables/pulls"
+export type LastActivityType = "update" | "comment"
 
-type LastActivityType = "update" | "comment"
-
-export const getLastActivity = (activity: Activity): Issue | Comment => {
+export const getLastActivity = <
+	T extends {
+		comment_list?: { updated_at: string }[]
+		updated_at: string
+	},
+>(
+	activity: T,
+): [LastActivityType, Exclude<T["comment_list"], undefined>[number] | T] => {
 	const lastActivityType: LastActivityType =
 		!activity.comment_list || activity.comment_list.length === 0
 			? "update"
@@ -11,7 +16,10 @@ export const getLastActivity = (activity: Activity): Issue | Comment => {
 			? "update"
 			: "comment"
 
-	return lastActivityType === "update"
-		? activity
-		: activity.comment_list?.[0] ?? activity
+	return [
+		lastActivityType,
+		lastActivityType === "update"
+			? activity
+			: activity.comment_list?.[0] ?? activity,
+	]
 }

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import VLastActivity from "./VLastActivity.vue"
-import { auth, hasAuth } from "../composables/auth"
-import type { Activity } from "../composables/pulls"
-import { relativeTime } from "../utils/relative-time"
-import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
 import VFiInfo from "./VFiInfo.vue"
 import VFiPR from "./VFiPR.vue"
 import VFiCheck from "./VFiCheck.vue"
 import VFiCross from "./VFiCross.vue"
+import VLabels from "./VLabels.vue"
+import { auth, hasAuth } from "../composables/auth"
+import type { Activity } from "../composables/pulls"
+import { relativeTime } from "../utils/relative-time"
+import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
 
 const props = defineProps<{ activity: Activity }>()
 const hasRead = ref(checkHasRead(props.activity))
@@ -56,6 +57,11 @@ const IconComponent = isPull
 				v-if="hasAuth(auth)"
 				:class="$style.small"
 				:activity="activity"
+			/>
+			<VLabels
+				v-if="activity.labels.length"
+				:activity="activity"
+				:class="$style.small"
 			/>
 		</div>
 	</li>
