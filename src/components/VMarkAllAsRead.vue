@@ -3,7 +3,7 @@ import { ref } from "vue"
 import { allActivities } from "../composables/pulls"
 import { markAsRead, hasRead } from "../composables/read"
 
-const isCaughtUp = ref(allActivities().map(hasRead).some(Boolean))
+const isCaughtUp = ref(allActivities().map(hasRead).every(Boolean))
 
 const markAllAsRead = () => {
 	markAsRead(allActivities())

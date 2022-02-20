@@ -10,7 +10,9 @@ export const auth = useStorage(
 	{ serializer: StorageSerializers.string },
 )
 type Auth = typeof auth
-export const hasAuth = (auth: Auth | UnwrapRef<Auth>): auth is Ref<string> => {
+export const hasAuth = (
+	auth: Auth | UnwrapRef<Auth>,
+): auth is Ref<string> | string => {
 	if (didHitRateLimit.value) return false
 
 	const value = isRef(auth) ? auth.value : auth

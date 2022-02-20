@@ -2,6 +2,8 @@
 import VListAggregator from "./components/VListAggregator.vue"
 import VMarkAllAsRead from "./components/VMarkAllAsRead.vue"
 import VGitHubAuth from "./components/VGitHubAuth.vue"
+import VOverdue from "./components/VOverdue.vue"
+import VHideMarkedAsRead from "./components/VHideMarkedAsRead.vue"
 </script>
 
 <template>
@@ -10,7 +12,11 @@ import VGitHubAuth from "./components/VGitHubAuth.vue"
 		<div :class="$style.auth">
 			<VGitHubAuth />
 		</div>
-		<VMarkAllAsRead />
+		<div :class="$style.controls">
+			<VMarkAllAsRead />
+			<VOverdue />
+			<VHideMarkedAsRead />
+		</div>
 	</div>
 	<VListAggregator />
 </template>
@@ -36,5 +42,12 @@ import VGitHubAuth from "./components/VGitHubAuth.vue"
 
 .auth {
 	margin-bottom: 1rem;
+}
+
+.controls {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	align-items: center;
 }
 </style>
