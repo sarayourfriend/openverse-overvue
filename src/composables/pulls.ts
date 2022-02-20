@@ -15,7 +15,7 @@ export type Comment = GetResponseDataTypeFromEndpointMethod<
 	() => Endpoints["GET /repos/{owner}/{repo}/comments/{comment_id}"]["response"]
 >
 
-export type Activity = Issue & { comment_list: Comment[] }
+export type Activity = Issue & { comment_list?: Comment[] }
 
 export const Repos = Object.freeze([
 	"openverse",
@@ -50,15 +50,19 @@ const fetchState: Record<Repo, boolean> = {
 const fetchComments = async (issues: Issue[]): Promise<Activity[]> => {
 	return await Promise.all(
 		issues.map(async (issue): Promise<Activity> => {
-			const res = await request(issue.comments_url, {
-				headers: getHeaders(),
-				sort: "desc",
-				per_page: 1,
-			})
+			try {
+				const res = await request(issue.comments_url, {
+					headers: getHeaders(),
+					sort: "desc",
+					per_page: 1,
+				})
 
-			checkRateLimit(res.headers)
-
-			return { ...issue, comment_list: res.data ? res.data : [] }
+				checkRateLimit(res.headers)
+				return { ...issue, comment_list: res.data ? res.data : [] }
+			} catch (e) {
+				console.error(`Unable to retrieve comments for issue(${issue.id})`, e)
+				return { ...issue, comment_list: [] }
+			}
 		}),
 	)
 }
