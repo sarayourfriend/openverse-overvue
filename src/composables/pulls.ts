@@ -1,4 +1,4 @@
-import { reactive } from "vue"
+import { reactive, ref, computed } from "vue"
 import { request } from "../utils/request"
 import type {
 	GetResponseDataTypeFromEndpointMethod,
@@ -7,6 +7,7 @@ import type {
 import { auth, hasAuth, getHeaders } from "./auth"
 import { checkRateLimit, didHitRateLimit } from "./rate-limit"
 import { getLastActivity, LastActivityType } from "../utils/last-activity"
+import type { Filter } from "../utils/filters"
 
 export type Issue = GetResponseDataTypeFromEndpointMethod<
 	() => Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]
@@ -44,6 +45,14 @@ export const activityList = reactive({
 	"openverse-api": [],
 	"openverse-frontend": [],
 } as Record<Repo, Activity[]>)
+
+export const filterList = ref([] as Filter[])
+export const hasFilters = computed(() => Boolean(filterList.value.length))
+
+export const isFiltered = (a: Activity): boolean =>
+	filterList.value.length === 0 || filterList.value.some((f) => f.test(a))
+
+export const useIsFiltered = (a: Activity) => computed(() => isFiltered(a))
 
 export const allActivities = () => [
 	...activityList["openverse"],
