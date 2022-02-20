@@ -5,25 +5,44 @@ import { auth, hasAuth } from "../composables/auth"
 import type { Activity } from "../composables/pulls"
 import { relativeTime } from "../utils/relative-time"
 import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
+import VFiInfo from "./VFiInfo.vue"
+import VFiPR from "./VFiPR.vue"
+import VFiCheck from "./VFiCheck.vue"
+import VFiCross from "./VFiCross.vue"
 
 const props = defineProps<{ activity: Activity }>()
 const hasRead = ref(checkHasRead(props.activity))
 watch([read], () => {
 	hasRead.value = checkHasRead(props.activity)
 })
+const isPull = "pull_request" in props.activity
+const isClosed = typeof props.activity.closed_at === "string"
+const isMerged = typeof props.activity.pull_request?.merged_at === "string"
+const IconComponent = isPull
+	? isClosed
+		? VFiCross
+		: isMerged
+		? VFiCheck
+		: VFiPR
+	: /* issue */ isClosed
+	? VFiCheck
+	: VFiInfo
 </script>
 
 <template>
 	<li :class="[$style.activity, hasRead && $style.read]">
-		<button
-			aria-label="Mark as read"
-			@click.prevent="markAsRead([activity])"
-			type="button"
-			:disabled="hasRead"
-			:class="$style.markAsRead"
-		>
-			☑️
-		</button>
+		<div :class="$style.actions">
+			<IconComponent :class="$style.icon" />
+			<button
+				aria-label="Mark as read"
+				@click.prevent="markAsRead([activity])"
+				type="button"
+				:disabled="hasRead"
+				:class="$style.markAsRead"
+			>
+				☑️
+			</button>
+		</div>
 		<div>
 			<a :class="$style.title" :href="activity.html_url">{{
 				activity.title
@@ -61,8 +80,20 @@ watch([read], () => {
 	border-bottom: none;
 }
 
-.markAsRead {
+.actions {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	margin-right: 1rem;
+}
+
+.icon {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
+.markAsRead {
+	margin-top: 0.5rem;
 }
 
 .read {
