@@ -2,6 +2,7 @@
 import VListAggregator from "./components/VListAggregator.vue"
 import VMarkAllAsRead from "./components/VMarkAllAsRead.vue"
 import VGitHubAuth from "./components/VGitHubAuth.vue"
+import VOverdue from "./components/VOverdue.vue"
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import VGitHubAuth from "./components/VGitHubAuth.vue"
 			<VGitHubAuth />
 		</div>
 		<VMarkAllAsRead />
+		<VOverdue />
 	</div>
 	<VListAggregator />
 </template>

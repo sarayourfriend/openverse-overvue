@@ -1,6 +1,5 @@
 import type { Activity } from "./pulls"
 import { useStorage } from "./use-storage"
-import { getLastActivity } from "../utils/last-activity"
 
 export const read = useStorage<Record<number, string>>("overvue:read", {})
 
@@ -23,7 +22,7 @@ export const hasRead = (activity: Activity): boolean => {
 	if (!lastReadBy) return false
 
 	return (
-		new Date(getLastActivity(activity).updated_at).valueOf() <
+		new Date(activity.lastActivity.updated_at).valueOf() <
 		new Date(lastReadBy).valueOf()
 	)
 }

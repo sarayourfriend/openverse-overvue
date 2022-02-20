@@ -1,4 +1,4 @@
-import { reactive } from "vue"
+import { reactive, ref, computed } from "vue"
 import { request } from "../utils/request"
 import type {
 	GetResponseDataTypeFromEndpointMethod,
@@ -6,6 +6,8 @@ import type {
 } from "@octokit/types"
 import { auth, hasAuth, getHeaders } from "./auth"
 import { checkRateLimit, didHitRateLimit } from "./rate-limit"
+import { getLastActivity, LastActivityType } from "../utils/last-activity"
+import type { Filter } from "../utils/filters"
 
 export type Issue = GetResponseDataTypeFromEndpointMethod<
 	() => Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]
@@ -15,7 +17,18 @@ export type Comment = GetResponseDataTypeFromEndpointMethod<
 	() => Endpoints["GET /repos/{owner}/{repo}/comments/{comment_id}"]["response"]
 >
 
-export type Activity = Issue & { comment_list: Comment[] }
+export type Label = GetResponseDataTypeFromEndpointMethod<
+	() => Endpoints["GET /repos/{owner}/{repo}/labels/{name}"]["response"]
+>
+
+export type Priority = "critical" | "high" | "medium" | "low"
+export type Activity = Omit<Issue, "labels"> & {
+	labels: (Pick<Label, "name"> & Partial<Omit<Label, "name">>)[]
+	comment_list?: Comment[]
+	priority?: Priority
+	lastActivityType: LastActivityType
+	lastActivity: Issue | Comment
+}
 
 export const Repos = Object.freeze([
 	"openverse",
@@ -33,6 +46,14 @@ export const activityList = reactive({
 	"openverse-frontend": [],
 } as Record<Repo, Activity[]>)
 
+export const filterList = ref([] as Filter[])
+export const hasFilters = computed(() => Boolean(filterList.value.length))
+
+export const isFiltered = (a: Activity): boolean =>
+	filterList.value.length === 0 || filterList.value.some((f) => f.test(a))
+
+export const useIsFiltered = (a: Activity) => computed(() => isFiltered(a))
+
 export const allActivities = () => [
 	...activityList["openverse"],
 	...activityList["openverse-catalog"],
@@ -47,20 +68,53 @@ const fetchState: Record<Repo, boolean> = {
 	"openverse-frontend": false,
 }
 
-const fetchComments = async (issues: Issue[]): Promise<Activity[]> => {
+const fetchComments = async <
+	T extends Omit<Activity, "lastActivity" | "lastActivityType">,
+>(
+	activity: T[],
+): Promise<T[]> => {
 	return await Promise.all(
-		issues.map(async (issue): Promise<Activity> => {
-			const res = await request(issue.comments_url, {
-				headers: getHeaders(),
-				sort: "desc",
-				per_page: 1,
-			})
+		activity.map(async (activity) => {
+			try {
+				const res = await request(activity.comments_url, {
+					headers: getHeaders(),
+					sort: "desc",
+					per_page: 1,
+				})
 
-			checkRateLimit(res.headers)
-
-			return { ...issue, comment_list: res.data ? res.data : [] }
+				checkRateLimit(res.headers)
+				return { ...activity, comment_list: res.data ? res.data : [] }
+			} catch (e) {
+				console.error(
+					`Unable to retrieve comments for issue(${activity.id})`,
+					e,
+				)
+				return { ...activity, comment_list: [] }
+			}
 		}),
 	)
+}
+
+const normalizeLabels = (issue: Issue) => ({
+	...issue,
+	labels: issue.labels.map((label) =>
+		typeof label === "string" ? { name: label } : (label as Label),
+	),
+})
+
+const withPriority = (activity: ReturnType<typeof normalizeLabels>) => ({
+	...activity,
+	priority: activity.labels
+		.find((l) => l.name.includes("priority"))
+		?.name.split(" ")
+		.slice(-1)[0] as Priority,
+})
+
+const withLastActivity = (
+	activity: Omit<Activity, "lastActivityType" | "lastActivity">,
+) => {
+	const [lastActivityType, lastActivity] = getLastActivity(activity)
+	return { ...activity, lastActivityType, lastActivity }
 }
 
 const fetchIssues = async (repo: Repo): Promise<Activity[] | null> => {
@@ -75,10 +129,12 @@ const fetchIssues = async (repo: Repo): Promise<Activity[] | null> => {
 			sort: "updated",
 		})
 
-		if (checkRateLimit(res.headers) || !hasAuth(auth))
-			return res.data.map((i) => ({ ...i, comment_list: [] }))
+		const issues = res.data.map((i) => withPriority(normalizeLabels(i)))
 
-		return fetchComments(res.data)
+		if (checkRateLimit(res.headers) || !hasAuth(auth))
+			return issues.map((i) => withLastActivity({ ...i, comment_list: [] }))
+
+		return (await fetchComments(issues)).map(withLastActivity)
 	} catch (e) {
 		console.error(`Failed to retrieve issues for ${repo}`, e)
 		return []

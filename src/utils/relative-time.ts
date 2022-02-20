@@ -3,7 +3,7 @@ const oneMinute = oneSecond * 60
 const oneHour = oneMinute * 60
 const oneDay = oneHour * 24
 
-const getFormatOptions = (
+export const getFormatOptions = (
 	ms: number,
 ): Parameters<Intl.RelativeTimeFormat["format"]> => {
 	const days = ms / oneDay
@@ -34,7 +34,7 @@ export const relativeTime = (date: string) => {
 	const [formatNumber, format] = getFormatOptions(diff)
 	const [, { value: n }, { value: unit }] =
 		new Intl.RelativeTimeFormat().formatToParts(
-			Math.floor(formatNumber),
+			Math.round(formatNumber),
 			format,
 		)
 	return n + unit

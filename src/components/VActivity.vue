@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import VLastActivity from "./VLastActivity.vue"
-import { auth, hasAuth } from "../composables/auth"
-import type { Activity } from "../composables/pulls"
-import { relativeTime } from "../utils/relative-time"
-import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
 import VFiInfo from "./VFiInfo.vue"
 import VFiPR from "./VFiPR.vue"
 import VFiCheck from "./VFiCheck.vue"
 import VFiCross from "./VFiCross.vue"
+import VLabels from "./VLabels.vue"
+import { auth, hasAuth } from "../composables/auth"
+import { Activity, useIsFiltered, hasFilters } from "../composables/pulls"
+import { relativeTime } from "../utils/relative-time"
+import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
 
 const props = defineProps<{ activity: Activity }>()
 const hasRead = ref(checkHasRead(props.activity))
@@ -27,10 +28,19 @@ const IconComponent = isPull
 	: /* issue */ isClosed
 	? VFiCheck
 	: VFiInfo
+
+const isFiltered = useIsFiltered(props.activity)
 </script>
 
 <template>
-	<li :class="[$style.activity, hasRead && $style.read]">
+	<li
+		:class="[
+			$style.activity,
+			hasFilters ? $style.hideableActivity : $style.activity,
+			hasRead && $style.read,
+			!isFiltered && $style.hidden,
+		]"
+	>
 		<div :class="$style.actions">
 			<IconComponent :class="$style.icon" />
 			<button
@@ -57,12 +67,18 @@ const IconComponent = isPull
 				:class="$style.small"
 				:activity="activity"
 			/>
+			<VLabels
+				v-if="activity.labels.length"
+				:activity="activity"
+				:class="$style.small"
+			/>
 		</div>
 	</li>
 </template>
 
 <style module>
-.activity {
+.activity,
+.hideableActivity {
 	border-bottom: 1px solid var(--text);
 	width: 100%;
 	padding: 1rem;
@@ -78,6 +94,28 @@ const IconComponent = isPull
 
 .activity:last-of-type {
 	border-bottom: none;
+}
+
+.hidden {
+	display: none;
+}
+
+.hideableActivity:not(.hidden) {
+	border-top: 1px solid var(--text);
+	border-bottom: 1px solid var(--text);
+}
+
+.hideableActivity:not(.hidden) ~ .hideableActivity {
+	border-top: 1px solid var(--text);
+}
+
+.hideableActivity:not(.hidden) ~ .hideableActivity:not(.hidden) {
+	border-top: none;
+	border-bottom: none;
+}
+
+.hideableActivity ~ .hideableActivity:not(.hidden) {
+	border-bottom: 1px solid var(--text);
 }
 
 .actions {
