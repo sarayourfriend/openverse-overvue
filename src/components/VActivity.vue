@@ -41,7 +41,11 @@ const isFiltered = useIsFiltered(props.activity)
 			hasRead && $style.read,
 			!isFiltered && $style.hidden,
 		]"
-		v-show="!hideRead || (hideRead && !hasRead)"
+		v-show="
+			!hideRead ||
+			(hideRead &&
+				!hasRead) /* @todo: Move this to a filter before undrafting PR. */
+		"
 	>
 		<div :class="$style.actions">
 			<IconComponent :class="$style.icon" />
