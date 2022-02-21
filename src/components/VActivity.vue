@@ -10,6 +10,7 @@ import { auth, hasAuth } from "../composables/auth"
 import { Activity, useIsFiltered, hasFilters } from "../composables/pulls"
 import { relativeTime } from "../utils/relative-time"
 import { hasRead as checkHasRead, markAsRead, read } from "../composables/read"
+import { hideRead } from "../composables/hide-read"
 
 const props = defineProps<{ activity: Activity }>()
 const hasRead = ref(checkHasRead(props.activity))
@@ -40,6 +41,11 @@ const isFiltered = useIsFiltered(props.activity)
 			hasRead && $style.read,
 			!isFiltered && $style.hidden,
 		]"
+		v-show="
+			!hideRead ||
+			(hideRead &&
+				!hasRead) /* @todo: Move this to a filter before undrafting PR. */
+		"
 	>
 		<div :class="$style.actions">
 			<IconComponent :class="$style.icon" />
