@@ -1,4 +1,4 @@
-import { reactive, ref, computed } from "vue"
+import { reactive } from "vue"
 import { request } from "../utils/request"
 import type {
 	GetResponseDataTypeFromEndpointMethod,
@@ -7,7 +7,10 @@ import type {
 import { auth, hasAuth, getHeaders } from "./auth"
 import { checkRateLimit, didHitRateLimit } from "./rate-limit"
 import { getLastActivity, LastActivityType } from "../utils/last-activity"
-import type { Filter } from "../utils/filters"
+
+export type RequestedReviewers = GetResponseDataTypeFromEndpointMethod<
+	() => Endpoints["GET /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"]["response"]
+>
 
 export type Issue = GetResponseDataTypeFromEndpointMethod<
 	() => Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]
@@ -28,6 +31,7 @@ export type Activity = Omit<Issue, "labels"> & {
 	priority?: Priority
 	lastActivityType: LastActivityType
 	lastActivity: Issue | Comment
+	requestedReviewers?: RequestedReviewers
 }
 
 export const Repos = Object.freeze([
@@ -46,14 +50,6 @@ export const activityList = reactive({
 	"openverse-frontend": [],
 } as Record<Repo, Activity[]>)
 
-export const filterList = ref([] as Filter[])
-export const hasFilters = computed(() => Boolean(filterList.value.length))
-
-export const isFiltered = (a: Activity): boolean =>
-	filterList.value.length === 0 || filterList.value.some((f) => f.test(a))
-
-export const useIsFiltered = (a: Activity) => computed(() => isFiltered(a))
-
 export const allActivities = () => [
 	...activityList["openverse"],
 	...activityList["openverse-catalog"],
@@ -66,6 +62,36 @@ const fetchState: Record<Repo, boolean> = {
 	"openverse-catalog": false,
 	"openverse-api": false,
 	"openverse-frontend": false,
+}
+
+const fetchRequestedReviewers = async (as: Activity[]) => {
+	await Promise.all(
+		as.reduce((promises, activity) => {
+			if (!("pull_request" in activity)) return promises
+
+			promises.push(
+				request(
+					"GET /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
+					{
+						headers: getHeaders(),
+						owner: "WordPress",
+						repo: activity.repository_url.split("/").slice(-1)[0],
+						pull_number: parseInt(
+							activity.pull_request?.html_url?.split("/").slice(-1)[0] ?? "",
+							10,
+						),
+					},
+				).then((r) => {
+					activity.requestedReviewers = r.data
+					return activity
+				}),
+			)
+
+			return promises
+		}, [] as Promise<Activity>[]),
+	)
+
+	return as
 }
 
 const fetchComments = async <
@@ -127,14 +153,17 @@ const fetchIssues = async (repo: Repo): Promise<Activity[] | null> => {
 			owner: "WordPress",
 			repo,
 			sort: "updated",
+			state: "all",
 		})
 
 		const issues = res.data.map((i) => withPriority(normalizeLabels(i)))
 
-		if (checkRateLimit(res.headers) || !hasAuth(auth))
+		if (checkRateLimit(res.headers) || !hasAuth(auth.value))
 			return issues.map((i) => withLastActivity({ ...i, comment_list: [] }))
 
-		return (await fetchComments(issues)).map(withLastActivity)
+		return await fetchRequestedReviewers(
+			(await fetchComments(issues)).map(withLastActivity),
+		)
 	} catch (e) {
 		console.error(`Failed to retrieve issues for ${repo}`, e)
 		return []
